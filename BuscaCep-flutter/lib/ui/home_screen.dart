@@ -1,3 +1,4 @@
+import 'package:busca_cep/ui/widgets/address_widget.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -76,7 +77,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: const Icon(Icons.search_rounded),
                 label: Text("Buscar CEP"),
               ),
-            )
+            ),
+            AddressWidget()
           ],
         ),
       ),
