@@ -3,7 +3,7 @@ import 'package:busca_cep/models/cep_model.dart';
 import 'package:http/http.dart' as http;
 
 class CepRepository {
-  static const String _baseUrl = 'viacep.com.br/ws/';
+  static const String _baseUrl = 'https://viacep.com.br/ws/';
 
   final http.Client client;
 
