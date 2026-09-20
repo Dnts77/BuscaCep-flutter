@@ -3,6 +3,7 @@ import 'package:busca_cep/repo/cep_repository.dart';
 import 'package:busca_cep/ui/widgets/address_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class HomeScreen extends StatefulWidget {
   const new({super.key});
@@ -15,19 +16,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final repository = CepRepository(client: http.Client());
   final cepController = TextEditingController();
+  final cepFormatter = MaskTextInputFormatter(
+    mask: '#####-###',
+    filter: {
+      '#': RegExp(r'[0-9]')
+    },
+    type: MaskAutoCompletionType.lazy
+  );
   String? errorMessage;
   CepModel? cepModel;
+  bool isLoading = false;
 
   Future<void> buscarCep() async{
+    FocusScope.of(context).unfocus();
     setState(() {
       errorMessage = null;
       cepModel = null;
+      isLoading = true;
     });
     final cep = cepController.text.trim();
 
     if(cep.isEmpty){
       setState(() {
         errorMessage = "Digite um CEP válido!";
+        isLoading = false;
       });
     }
 
@@ -36,11 +48,13 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         errorMessage = null;
         cepModel = addressModel;
+        isLoading = false;
       });
 
     } catch (e) {
       setState(() {
         errorMessage = 'Erro ao buscar endereço';
+        isLoading = false;
       });
     }
   }
@@ -99,6 +113,9 @@ class _HomeScreenState extends State<HomeScreen> {
             TextField(
               keyboardType: TextInputType.number,
               maxLength: 9,
+              inputFormatters: [
+                cepFormatter
+              ],
               controller: cepController,
               decoration: InputDecoration(
                 prefixIcon: Icon(Icons.location_on_rounded, color: theme.colorScheme.primary),
@@ -108,8 +125,39 @@ class _HomeScreenState extends State<HomeScreen> {
               )
             ),
             AnimatedSwitcher(
-              duration: Duration.zero,
-              child: ElevatedButton.icon(
+              duration: Duration(milliseconds: 200),
+              child: isLoading ? Container(
+                height: 60,
+                width: 200,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12)
+                ),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    spacing: 12,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: theme.colorScheme.primary,
+                        )
+                      ),
+                      Text(
+                        "Buscando CEP...",
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w500
+                        )
+                      ),
+                    ],
+                  ),
+                )
+              ) : 
+              ElevatedButton.icon(
                 onPressed: buscarCep,
                 icon: const Icon(Icons.search_rounded),
                 label: Text("Buscar CEP"),
@@ -149,8 +197,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ),           
             Visibility(
               visible: cepModel != null,
-              child: AddressWidget(
-                cepModel: cepModel,
+              child: AnimatedOpacity(
+                duration: Duration(seconds: 3),
+                opacity: cepModel != null ? 1.0 : 0.0,
+                child: AddressWidget(
+                  cepModel: cepModel,
+                ),
               )
             )
           ],
